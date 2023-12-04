@@ -4,10 +4,10 @@ module.exports.createUser = (req, res) => {
   const { name, about, avatar } = req.body;
   User.create({ name, about, avatar })
     .then(user => {
-      res.status(201).send({ data: user })
+      res.send({ data: user })
     })
-    .catch(error => {
-      res.status(500).send({ error: 'Ошибка при создании пользователя' })
+    .catch(() => {
+      res.status(500).send({ message: 'Ошибка при создании пользователя' })
     });
 };
 
@@ -30,8 +30,8 @@ module.exports.getUserById = (req, res) => {
       }
       res.json(user);
     })
-    .catch(error => {
-      res.status(500).json({ error: 'Ошибка при попытке вернуть данные' });
+    .catch(() => {
+      res.status(500).json({ message: 'Запрашиваемый пользователь не найден' });
     });
 };
 
