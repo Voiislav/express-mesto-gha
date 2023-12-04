@@ -1,23 +1,27 @@
 const Card = require('../models/card.js');
-
+const { sendErrorResponse } = require('../errorResponse.js');
+ 
 module.exports.getAllCards = (req, res) => {
   Card.find()
   .then(cards => {
     res.json(cards);
   })
   .catch(error => {
-    res.status(500).json({ error: 'Ошибка при попытке вернуть данные' });
+    sendErrorResponse(res, 500, 'Ошибка при попытке вернуть данные');
   });
 };
 
 module.exports.createCard = (req, res) => {
   const { name, link, owner, likes, createdAt } = req.body;
+  if (!name || !link) {
+    return sendErrorResponse(res, 400, 'Переданы некорректные данные для создания карточки');
+  }
   Card.create({ name, link })
     .then(card => {
-      res.status(201).send({ data: card })
+      res.status(201).json({ data: card });
     })
     .catch(error => {
-      res.status(500).send({ error: 'Ошибка при создании пользователя' })
+      sendErrorResponse(res, 500, 'Ошибка при создании карточки');
     });
 };
 
@@ -26,13 +30,13 @@ module.exports.deleteCard = (req, res) => {
   Card.findByIdAndDelete(cardId)
     .then(card => {
       if (!card) {
-        res.status(404).json({ error: 'Карточка не найдена' });
+        return sendErrorResponse(res, 404, 'Карточка не найдена');
       } else {
         res.json({ message: 'Карточка успешно удалена' });
       }
     })
     .catch(error => {
-      res.status(500).json({ error: 'Ошибка при удалении карточки' });
+      sendErrorResponse(res, 500, 'Ошибка при удалении карточки');
     });
 };
 
