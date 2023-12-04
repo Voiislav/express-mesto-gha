@@ -1,3 +1,1 @@
-module.exports.sendErrorResponse = (res, statusCode, message ) => {
-  return res.status(statusCode).json({ message });
-}
+module.exports.sendErrorResponse = (res, statusCode, message) => res.status(statusCode).json({ message });
