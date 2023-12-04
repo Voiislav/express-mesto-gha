@@ -2,6 +2,8 @@ const express = require("express");
 const app = express();
 const bodyParser = require('body-parser');
 const userRoutes = require('./routes/users.js');
+const cardRoutes = require('./routes/cards.js');
+const mongoose = require('mongoose');
 
 mongoose.connect('mongodb://localhost:27017/mestodb', {
   useNewUrlParser: true,
@@ -11,7 +13,8 @@ mongoose.connect('mongodb://localhost:27017/mestodb', {
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use('/', userRoutes);
+app.use('/users', userRoutes);
+app.use('/cards', cardRoutes);
 
 const { PORT = 3000 } = process.env;
 

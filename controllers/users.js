@@ -34,3 +34,31 @@ module.exports.getUserById = (req, res) => {
       res.status(500).json({ error: 'Ошибка при попытке вернуть данные' });
     });
 };
+
+module.exports.updateProfile = (req, res) => {
+  const { name, about } = req.body;
+  User.findByIdAndUpdate(req.user._id, { name, about }, { new: true })
+    .then(user => {
+      if (!user) {
+        return res.status(404).json({ error: 'Пользователь не найден' });
+      }
+      res.json(user);
+    })
+    .catch(error => {
+      res.status(500).json({ error: 'Ошибка при обновлении профиля пользователя' });
+    });
+};
+
+module.exports.updateAvatar = (req, res) => {
+  const { avatar } = req.body;
+  User.findByIdAndUpdate(req.user._id, { avatar }, { new: true })
+    .then(user => {
+      if (!user) {
+        return res.status(404).json({ error: 'Пользователь не найден' });
+      }
+      res.json(user);
+    })
+    .catch(error => {
+      res.status(500).json({ error: 'Ошибка при обновлении аватара пользователя' });
+    });
+};
