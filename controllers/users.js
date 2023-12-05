@@ -1,6 +1,8 @@
 const User = require('../models/user');
 
-const { sendErrorResponse } = require('../errorResponse');
+const { sendErrorResponse } = require('../utils/errorResponse');
+
+const { ERROR_NOT_FOUND, ERROR_BAD_REQUEST } = require('../utils/errorCodes');
 
 module.exports.createUser = (req, res) => {
   const { name, about, avatar } = req.body;
@@ -9,7 +11,7 @@ module.exports.createUser = (req, res) => {
       res.json({ data: user });
     })
     .catch((error) => {
-      if (error.statusCode === 400) {
+      if (error.statusCode === ERROR_BAD_REQUEST) {
         return sendErrorResponse(res, error.statusCode, 'Переданы некорректные данные');
       }
       return sendErrorResponse(res, error.statusCode, error.message);
@@ -32,7 +34,7 @@ module.exports.getUserById = (req, res) => {
       res.json(user);
     })
     .catch((error) => {
-      if (error.statusCode === 404) {
+      if (error.statusCode === ERROR_NOT_FOUND) {
         return sendErrorResponse(res, error.statusCode, 'Запрашиваемый пользователь не найден');
       }
       return sendErrorResponse(res, error.statusCode, error.message);
@@ -46,9 +48,9 @@ module.exports.updateProfile = (req, res) => {
       res.json(user);
     })
     .catch((error) => {
-      if (error.statusCode === 404) {
+      if (error.statusCode === ERROR_NOT_FOUND) {
         return sendErrorResponse(res, error.statusCode, 'Запрашиваемый пользователь не найден');
-      } else if (error.statusCode === 400) {
+      } else if (error.statusCode === ERROR_BAD_REQUEST) {
         return sendErrorResponse(res, error.statusCode, 'Переданы некорректные данные');
       }
       return sendErrorResponse(res, error.statusCode, error.message);
@@ -62,9 +64,9 @@ module.exports.updateAvatar = (req, res) => {
       res.json(user);
     })
     .catch((error) => {
-      if (error.statusCode === 404) {
+      if (error.statusCode === ERROR_NOT_FOUND) {
         return sendErrorResponse(res, error.statusCode, 'Запрашиваемый пользователь не найден');
-      } else if (error.statusCode === 400) {
+      } else if (error.statusCode === ERROR_BAD_REQUEST) {
         return sendErrorResponse(res, error.statusCode, 'Переданы некорректные данные');
       }
       return sendErrorResponse(res, error.statusCode, error.message);

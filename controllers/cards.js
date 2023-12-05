@@ -1,6 +1,8 @@
 const Card = require('../models/card');
 
-const { sendErrorResponse } = require('../errorResponse');
+const { sendErrorResponse } = require('../utils/errorResponse');
+
+const { ERROR_NOT_FOUND, ERROR_BAD_REQUEST } = require('../utils/errorCodes');
 
 module.exports.getAllCards = (req, res) => {
   Card.find().then((cards) => {
@@ -19,7 +21,7 @@ module.exports.createCard = (req, res) => {
       res.json({ data: card });
     })
     .catch((error) => {
-      if (error.statusCode === 400) {
+      if (error.statusCode === ERROR_BAD_REQUEST) {
         return sendErrorResponse(res, error.statusCode, 'Переданы некорректные данные');
       }
       return sendErrorResponse(res, error.statusCode, error.message);
@@ -34,7 +36,7 @@ module.exports.deleteCard = (req, res) => {
       res.json({ message: 'Карточка успешно удалена' });
     })
     .catch((error) => {
-      if (error.statusCode === 404) {
+      if (error.statusCode === ERROR_NOT_FOUND) {
         return sendErrorResponse(res, error.statusCode, 'Карточка не найдена');
       }
       return sendErrorResponse(res, error.statusCode, error.message);
@@ -48,7 +50,7 @@ module.exports.addLike = (req, res) => {
       res.json(card);
     })
     .catch((error) => {
-      if (error.statusCode === 404) {
+      if (error.statusCode === ERROR_NOT_FOUND) {
         return sendErrorResponse(res, error.statusCode, 'Карточка не найдена');
       }
       return sendErrorResponse(res, error.statusCode, error.message);
@@ -62,7 +64,7 @@ module.exports.removeLike = (req, res) => {
       res.json(card);
     })
     .catch((error) => {
-      if (error.statusCode === 404) {
+      if (error.statusCode === ERROR_NOT_FOUND) {
         return sendErrorResponse(res, error.statusCode, 'Карточка не найдена');
       }
       return sendErrorResponse(res, error.statusCode, error.message);
