@@ -21,6 +21,10 @@ app.use('/users', require('./routes/users'));
 
 app.use('/cards', require('./routes/cards'));
 
+app.use((req, res) => {
+  res.status(404).json({ error: 'Ничего не найдено' });
+});
+
 const { PORT = 3000 } = process.env;
 
 app.listen(PORT, () => {
