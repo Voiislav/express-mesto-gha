@@ -4,24 +4,23 @@ const { sendErrorResponse } = require('../errorResponse');
 
 module.exports.createUser = (req, res) => {
   const { name, about, avatar } = req.body;
-
-  if (!name || !about || !avatar) {
-    return sendErrorResponse(res, 400, 'Переданы некорректные данные для создания пользователя');
-  }
   User.create({ name, about, avatar })
     .then((user) => {
       res.json({ data: user });
     })
-    .catch(() => {
-      sendErrorResponse(res, 500, 'Ошибка при создании пользователя');
+    .catch((error) => {
+      if (error.statusCode === 400) {
+        return sendErrorResponse(res, error.statusCode, 'Переданы некорректные данные');
+      }
+      return sendErrorResponse(res, error.statusCode, error.message);
     });
 };
 
 module.exports.getAllUsers = (req, res) => {
   User.find().then((users) => {
     res.json(users);
-  }).catch(() => {
-    res.status(500).json({ error: 'Ошибка при попытке вернуть данные' });
+  }).catch((error) => {
+    sendErrorResponse(res, error.statusCode, error.message);
   });
 };
 
@@ -30,13 +29,13 @@ module.exports.getUserById = (req, res) => {
 
   User.findById(userId)
     .then((user) => {
-      if (!user) {
-        return res.status(404).json({ error: 'Пользователь не найден' });
-      }
       res.json(user);
     })
-    .catch(() => {
-      res.status(500).json({ message: 'Запрашиваемый пользователь не найден' });
+    .catch((error) => {
+      if (error.statusCode === 404) {
+        return sendErrorResponse(res, error.statusCode, 'Запрашиваемый пользователь не найден');
+      }
+      return sendErrorResponse(res, error.statusCode, error.message);
     });
 };
 
@@ -44,13 +43,15 @@ module.exports.updateProfile = (req, res) => {
   const { name, about } = req.body;
   User.findByIdAndUpdate(req.user._id, { name, about }, { new: true })
     .then((user) => {
-      if (!user) {
-        return res.status(404).json({ error: 'Пользователь не найден' });
-      }
       res.json(user);
     })
-    .catch(() => {
-      res.status(500).json({ error: 'Ошибка при обновлении профиля пользователя' });
+    .catch((error) => {
+      if (error.statusCode === 404) {
+        return sendErrorResponse(res, error.statusCode, 'Запрашиваемый пользователь не найден');
+      } else if (error.statusCode === 400) {
+        return sendErrorResponse(res, error.statusCode, 'Переданы некорректные данные');
+      }
+      return sendErrorResponse(res, error.statusCode, error.message);
     });
 };
 
@@ -58,12 +59,14 @@ module.exports.updateAvatar = (req, res) => {
   const { avatar } = req.body;
   User.findByIdAndUpdate(req.user._id, { avatar }, { new: true })
     .then((user) => {
-      if (!user) {
-        return res.status(404).json({ error: 'Пользователь не найден' });
-      }
       res.json(user);
     })
-    .catch(() => {
-      res.status(500).json({ error: 'Ошибка при обновлении аватара пользователя' });
+    .catch((error) => {
+      if (error.statusCode === 404) {
+        return sendErrorResponse(res, error.statusCode, 'Запрашиваемый пользователь не найден');
+      } else if (error.statusCode === 400) {
+        return sendErrorResponse(res, error.statusCode, 'Переданы некорректные данные');
+      }
+      return sendErrorResponse(res, error.statusCode, error.message);
     });
 };
