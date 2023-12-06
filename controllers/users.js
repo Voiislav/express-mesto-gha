@@ -2,7 +2,7 @@ const User = require('../models/user');
 
 const { sendErrorResponse } = require('../utils/errorResponse');
 
-const { ERROR_NOT_FOUND, ERROR_BAD_REQUEST } = require('../utils/errorCodes');
+const { ERROR_NOT_FOUND, ERROR_BAD_REQUEST, SERVER_ERROR } = require('../utils/errorCodes');
 
 module.exports.createUser = (req, res) => {
   const { name, about, avatar } = req.body;
@@ -11,10 +11,10 @@ module.exports.createUser = (req, res) => {
       res.json({ data: user });
     })
     .catch((error) => {
-      if (error.statusCode === ERROR_BAD_REQUEST) {
-        return sendErrorResponse(res, error.statusCode, 'Переданы некорректные данные');
+      if (error.name === 'ValidationError') {
+        return sendErrorResponse(res, ERROR_BAD_REQUEST, 'Переданы некорректные данные');
       }
-      return sendErrorResponse(res, error.statusCode, error.message);
+      return sendErrorResponse(res, SERVER_ERROR, error.message);
     });
 };
 
@@ -22,7 +22,7 @@ module.exports.getAllUsers = (req, res) => {
   User.find().then((users) => {
     res.json(users);
   }).catch((error) => {
-    sendErrorResponse(res, error.statusCode, error.message);
+    sendErrorResponse(res, SERVER_ERROR, error.message);
   });
 };
 
@@ -34,10 +34,10 @@ module.exports.getUserById = (req, res) => {
       res.json(user);
     })
     .catch((error) => {
-      if (error.statusCode === ERROR_NOT_FOUND) {
-        return sendErrorResponse(res, error.statusCode, 'Запрашиваемый пользователь не найден');
+      if (error.name === 'CastError') {
+        return sendErrorResponse(res, ERROR_NOT_FOUND, 'Запрашиваемый пользователь не найден');
       }
-      return sendErrorResponse(res, error.statusCode, error.message);
+      return sendErrorResponse(res, SERVER_ERROR, error.message);
     });
 };
 
@@ -48,12 +48,12 @@ module.exports.updateProfile = (req, res) => {
       res.json(user);
     })
     .catch((error) => {
-      if (error.statusCode === ERROR_NOT_FOUND) {
-        return sendErrorResponse(res, error.statusCode, 'Запрашиваемый пользователь не найден');
-      } else if (error.statusCode === ERROR_BAD_REQUEST) {
-        return sendErrorResponse(res, error.statusCode, 'Переданы некорректные данные');
+      if (error.name === 'CastError') {
+        return sendErrorResponse(res, ERROR_NOT_FOUND, 'Запрашиваемый пользователь не найден');
+      } else if (error.name === 'ValidationError') {
+        return sendErrorResponse(res, ERROR_BAD_REQUEST, 'Переданы некорректные данные');
       }
-      return sendErrorResponse(res, error.statusCode, error.message);
+      return sendErrorResponse(res, SERVER_ERROR, error.message);
     });
 };
 
@@ -64,11 +64,11 @@ module.exports.updateAvatar = (req, res) => {
       res.json(user);
     })
     .catch((error) => {
-      if (error.statusCode === ERROR_NOT_FOUND) {
-        return sendErrorResponse(res, error.statusCode, 'Запрашиваемый пользователь не найден');
-      } else if (error.statusCode === ERROR_BAD_REQUEST) {
-        return sendErrorResponse(res, error.statusCode, 'Переданы некорректные данные');
+      if (error.name === 'CastError') {
+        return sendErrorResponse(res, ERROR_NOT_FOUND, 'Запрашиваемый пользователь не найден');
+      } else if (error.name === 'ValidationError') {
+        return sendErrorResponse(res, ERROR_BAD_REQUEST, 'Переданы некорректные данные');
       }
-      return sendErrorResponse(res, error.statusCode, error.message);
+      return sendErrorResponse(res, SERVER_ERROR, error.message);
     });
 };

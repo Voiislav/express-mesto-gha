@@ -2,13 +2,13 @@ const Card = require('../models/card');
 
 const { sendErrorResponse } = require('../utils/errorResponse');
 
-const { ERROR_NOT_FOUND, ERROR_BAD_REQUEST } = require('../utils/errorCodes');
+const { ERROR_NOT_FOUND, ERROR_BAD_REQUEST, SERVER_ERROR } = require('../utils/errorCodes');
 
 module.exports.getAllCards = (req, res) => {
   Card.find().then((cards) => {
     res.json(cards);
   }).catch((error) => {
-    sendErrorResponse(res, error.statusCode, error.message);
+    sendErrorResponse(res, SERVER_ERROR, error.message);
   });
 };
 
@@ -21,10 +21,10 @@ module.exports.createCard = (req, res) => {
       res.json({ data: card });
     })
     .catch((error) => {
-      if (error.statusCode === ERROR_BAD_REQUEST) {
-        return sendErrorResponse(res, error.statusCode, 'Переданы некорректные данные');
+      if (error.name === 'ValidationError') {
+        return sendErrorResponse(res, ERROR_BAD_REQUEST, 'Переданы некорректные данные');
       }
-      return sendErrorResponse(res, error.statusCode, error.message);
+      return sendErrorResponse(res, SERVER_ERROR, error.message);
     });
 };
 
@@ -36,10 +36,10 @@ module.exports.deleteCard = (req, res) => {
       res.json({ message: 'Карточка успешно удалена' });
     })
     .catch((error) => {
-      if (error.statusCode === ERROR_NOT_FOUND) {
-        return sendErrorResponse(res, error.statusCode, 'Карточка не найдена');
+      if (error.name === 'CastError') {
+        return sendErrorResponse(res, ERROR_NOT_FOUND, 'Карточка не найдена');
       }
-      return sendErrorResponse(res, error.statusCode, error.message);
+      return sendErrorResponse(res, SERVER_ERROR, error.message);
     });
 };
 
@@ -50,10 +50,10 @@ module.exports.addLike = (req, res) => {
       res.json(card);
     })
     .catch((error) => {
-      if (error.statusCode === ERROR_NOT_FOUND) {
-        return sendErrorResponse(res, error.statusCode, 'Карточка не найдена');
+      if (error.name === 'CastError') {
+        return sendErrorResponse(res, ERROR_NOT_FOUND, 'Карточка не найдена');
       }
-      return sendErrorResponse(res, error.statusCode, error.message);
+      return sendErrorResponse(res, SERVER_ERROR, error.message);
     });
 };
 
@@ -64,9 +64,9 @@ module.exports.removeLike = (req, res) => {
       res.json(card);
     })
     .catch((error) => {
-      if (error.statusCode === ERROR_NOT_FOUND) {
-        return sendErrorResponse(res, error.statusCode, 'Карточка не найдена');
+      if (error.name === 'CastError') {
+        return sendErrorResponse(res, ERROR_NOT_FOUND, 'Карточка не найдена');
       }
-      return sendErrorResponse(res, error.statusCode, error.message);
+      return sendErrorResponse(res, SERVER_ERROR, error.message);
     });
 };
