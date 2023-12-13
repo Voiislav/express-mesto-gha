@@ -35,6 +35,22 @@ module.exports.createUser = (req, res) => {
     });
 };
 
+module.exports.getCurrentUser = (req, res) => {
+  const userId = req.user._id;
+
+  User.findById(userId)
+    .then((user) => {
+      if (!user) {
+        return sendErrorResponse(res, ERROR_NOT_FOUND, 'Запрашиваемый пользователь не найден');
+      }
+
+      res.json(user);
+    })
+    .catch((error) => {
+      return sendErrorResponse(res, ERROR_BAD_REQUEST, error.message);
+    });
+};
+
 module.exports.getAllUsers = (req, res) => {
   User.find().then((users) => {
     res.json(users);
