@@ -2,7 +2,7 @@ const Card = require('../models/card');
 
 const { sendErrorResponse } = require('../utils/errorResponse');
 
-const { ERROR_NOT_FOUND, ERROR_BAD_REQUEST, SERVER_ERROR } = require('../utils/errorCodes');
+const { ERROR_NOT_FOUND, ERROR_BAD_REQUEST, SERVER_ERROR, ERROR_FORBIDDEN } = require('../utils/errorCodes');
 
 module.exports.getAllCards = (req, res) => {
   Card.find().then((cards) => {
@@ -29,9 +29,19 @@ module.exports.createCard = (req, res) => {
 };
 
 module.exports.deleteCard = (req, res) => {
-  const { cardId } = req.params.cardId;
+  const { cardId } = req.params;
+  const userId = req.user._id; //
 
-  Card.findByIdAndDelete(cardId)
+  Card.findById(cardId)
+    .then((card) => {
+      if (!card) {
+        return sendErrorResponse(res, ERROR_NOT_FOUND, 'Карточка не найдена');
+      }
+      if (card.owner.toString() !== userId) {
+        return sendErrorResponse(res, ERROR_FORBIDDEN, 'Нет прав для удаления этой карточки');
+      }
+      return Card.findByIdAndDelete(cardId);
+    })
     .then(() => {
       res.json({ message: 'Карточка успешно удалена' });
     })
