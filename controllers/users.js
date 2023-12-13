@@ -1,12 +1,27 @@
 const User = require('../models/user');
 
+const bcrypt = require('bcrypt');
+
 const { sendErrorResponse } = require('../utils/errorResponse');
 
 const { ERROR_NOT_FOUND, ERROR_BAD_REQUEST, SERVER_ERROR } = require('../utils/errorCodes');
 
 module.exports.createUser = (req, res) => {
-  const { name, about, avatar } = req.body;
-  User.create({ name, about, avatar })
+  const {
+    name,
+    about,
+    avatar,
+    email,
+    password,
+  } = req.body;
+  const hash = bcrypt.hash(password, 10);
+  User.create({
+    name,
+    about,
+    avatar,
+    email,
+    password: hash,
+  })
     .then((user) => {
       res.json({ data: user });
     })
