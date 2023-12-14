@@ -4,9 +4,11 @@ const bcrypt = require('bcrypt');
 
 const jwt = require('jsonwebtoken');
 
-const { sendErrorResponse } = require('../utils/errorResponse');
-
-const { ERROR_NOT_FOUND, ERROR_BAD_REQUEST, SERVER_ERROR, ERROR_UNAUTHORIZED } = require('../utils/errorCodes');
+const { ErrorNotFound } = require('../errors/ErrorNotFound');
+const { ServerError } = require('../errors/ServerError');
+const { ErrorBadRequest } = require('../errors/ErrorBadRequest');
+const { ErrorConflict } = require('../errors/ErrorConflict');
+const { ErrorUnauthorized } = require('../errors/ErrorUnauthorized');
 
 module.exports.createUser = (req, res) => {
   const {
@@ -25,13 +27,16 @@ module.exports.createUser = (req, res) => {
     password: hash,
   })
     .then((user) => {
-      res.json({ data: user });
+      res.status(201).json({ data: user });
     })
     .catch((error) => {
-      if (error.name === 'ValidationError') {
-        return sendErrorResponse(res, ERROR_BAD_REQUEST, 'Переданы некорректные данные');
+      if (error.code === 11000) {
+        throw new ErrorConflict('Пользователь с такой почтой уже существует');
       }
-      return sendErrorResponse(res, SERVER_ERROR, error.message);
+      if (error.name === 'ValidationError') {
+        throw new ErrorBadRequest('Переданы некорректные данные');
+      }
+      throw new ServerError('Ошибка сервера');
     });
 };
 
@@ -41,22 +46,19 @@ module.exports.getCurrentUser = (req, res) => {
   User.findById(userId)
     .then((user) => {
       if (!user) {
-        return sendErrorResponse(res, ERROR_NOT_FOUND, 'Запрашиваемый пользователь не найден');
+        throw new ErrorNotFound('Запрашиваемый пользователь не найден');
       }
 
       res.json(user);
     })
-    .catch((error) => {
-      return sendErrorResponse(res, ERROR_BAD_REQUEST, error.message);
-    });
+    .catch(next);
 };
 
 module.exports.getAllUsers = (req, res) => {
   User.find().then((users) => {
     res.json(users);
-  }).catch((error) => {
-    sendErrorResponse(res, SERVER_ERROR, error.message);
-  });
+  })
+  .catch(next);
 };
 
 module.exports.getUserById = (req, res) => {
@@ -67,10 +69,13 @@ module.exports.getUserById = (req, res) => {
       res.json(user);
     })
     .catch((error) => {
-      if (error.name === 'CastError') {
-        return sendErrorResponse(res, ERROR_NOT_FOUND, 'Запрашиваемый пользователь не найден');
+      if (error.name === 'DocumentNotFoundError') {
+        throw new ErrorNotFound('Запрашиваемый пользователь не найден');
       }
-      return sendErrorResponse(res, SERVER_ERROR, error.message);
+      if (error.name === 'CastError') {
+        throw new ErrorBadRequest('Переданы некорректные данные');
+      }
+      throw new ServerError('Ошибка сервера');
     });
 };
 
@@ -81,12 +86,16 @@ module.exports.updateProfile = (req, res) => {
       res.json(user);
     })
     .catch((error) => {
-      if (error.name === 'CastError') {
-        return sendErrorResponse(res, ERROR_NOT_FOUND, 'Запрашиваемый пользователь не найден');
-      } else if (error.name === 'ValidationError') {
-        return sendErrorResponse(res, ERROR_BAD_REQUEST, 'Переданы некорректные данные');
+      if (error.name === 'DocumentNotFoundError') {
+        throw new ErrorNotFound('Запрашиваемый пользователь не найден');
       }
-      return sendErrorResponse(res, SERVER_ERROR, error.message);
+      if (error.name === 'CastError') {
+        throw new ErrorBadRequest('Переданы некорректные данные');
+      }
+      if (error.name === 'ValidationError') {
+        throw new ErrorBadRequest('Переданы некорректные данные');
+      }
+      throw new ServerError('Ошибка сервера');
     });
 };
 
@@ -97,33 +106,35 @@ module.exports.updateAvatar = (req, res) => {
       res.json(user);
     })
     .catch((error) => {
-      if (error.name === 'CastError') {
-        return sendErrorResponse(res, ERROR_NOT_FOUND, 'Запрашиваемый пользователь не найден');
-      } else if (error.name === 'ValidationError') {
-        return sendErrorResponse(res, ERROR_BAD_REQUEST, 'Переданы некорректные данные');
+      if (error.name === 'DocumentNotFoundError') {
+        throw new ErrorNotFound('Запрашиваемый пользователь не найден');
       }
-      return sendErrorResponse(res, SERVER_ERROR, error.message);
+      if (error.name === 'CastError') {
+        throw new ErrorBadRequest('Переданы некорректные данные');
+      }
+      if (error.name === 'ValidationError') {
+        throw new ErrorBadRequest('Переданы некорректные данные');
+      }
+      throw new ServerError('Ошибка сервера');
     });
 };
 
 module.exports.login = (req, res) => {
   const { email, password } = req.body;
   const user = User.findOne({ email }).select('+password')
-  .then((user) => {
-    if (!user) {
-      return Promise.reject({ ERROR_UNAUTHORIZED: true, message: 'Неправильные почта или пароль' });
-    }
-    return bcrypt.compare(password, user.password);
-  })
-  .then((matched) => {
-    if (!matched) {
-      return Promise.reject({ ERROR_UNAUTHORIZED: true, message: 'Неправильные почта или пароль' });
-    }
-    const token = jwt.sign({ _id: user._id }, 'some-secret-key', { expiresIn: '7d' });
-    res.cookie('jwt', token, { httpOnly: true, maxAge: 7 * 24 * 60 * 60 * 1000 });
-    res.json({ message: 'Авторизация прошла успешно', token });
-  })
-  .catch((error) => {
-    return sendErrorResponse(res, SERVER_ERROR, error.message);
-  });
+    .then((user) => {
+      if (!user) {
+        throw new ErrorUnauthorized('Неправильные почта или пароль');
+      }
+      return bcrypt.compare(password, user.password);
+    })
+    .then((matched) => {
+      if (!matched) {
+        throw new ErrorUnauthorized('Неправильные почта или пароль');
+      }
+      const token = jwt.sign({ _id: user._id }, 'some-secret-key', { expiresIn: '7d' });
+      res.cookie('jwt', token, { httpOnly: true, maxAge: 7 * 24 * 60 * 60 * 1000 });
+      res.json({ message: 'Авторизация прошла успешно', token });
+    })
+    .catch(next);
 };

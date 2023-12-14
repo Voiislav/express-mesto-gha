@@ -1,15 +1,15 @@
 const Card = require('../models/card');
 
-const { sendErrorResponse } = require('../utils/errorResponse');
-
-const { ERROR_NOT_FOUND, ERROR_BAD_REQUEST, SERVER_ERROR, ERROR_FORBIDDEN } = require('../utils/errorCodes');
+const { ErrorNotFound } = require('../errors/ErrorNotFound');
+const { ForbiddenError } = require('../errors/ForbiddenError');
+const { ServerError } = require('../errors/ServerError');
+const { ErrorBadRequest } = require('../errors/ErrorBadRequest');
 
 module.exports.getAllCards = (req, res) => {
   Card.find().then((cards) => {
     res.json(cards);
-  }).catch((error) => {
-    sendErrorResponse(res, SERVER_ERROR, error.message);
-  });
+  })
+  .catch(next);
 };
 
 module.exports.createCard = (req, res) => {
@@ -18,14 +18,9 @@ module.exports.createCard = (req, res) => {
   } = req.body;
   Card.create({ name, link })
     .then((card) => {
-      res.json({ data: card });
+      res.status(201).json({ data: card });
     })
-    .catch((error) => {
-      if (error.name === 'ValidationError') {
-        return sendErrorResponse(res, ERROR_BAD_REQUEST, 'Переданы некорректные данные');
-      }
-      return sendErrorResponse(res, SERVER_ERROR, error.message);
-    });
+    .catch(next);
 };
 
 module.exports.deleteCard = (req, res) => {
@@ -35,22 +30,17 @@ module.exports.deleteCard = (req, res) => {
   Card.findById(cardId)
     .then((card) => {
       if (!card) {
-        return sendErrorResponse(res, ERROR_NOT_FOUND, 'Карточка не найдена');
+        throw new ErrorNotFound('Карточка не найдена');
       }
       if (card.owner.toString() !== userId) {
-        return sendErrorResponse(res, ERROR_FORBIDDEN, 'Нет прав для удаления этой карточки');
+        throw new ForbiddenError('Нет прав для удаления этой карточки');
       }
-      return Card.findByIdAndDelete(cardId);
+      return Card.deleteOne(card);
     })
     .then(() => {
       res.json({ message: 'Карточка успешно удалена' });
     })
-    .catch((error) => {
-      if (error.name === 'CastError') {
-        return sendErrorResponse(res, ERROR_NOT_FOUND, 'Карточка не найдена');
-      }
-      return sendErrorResponse(res, SERVER_ERROR, error.message);
-    });
+    .catch(next);
 };
 
 module.exports.addLike = (req, res) => {
@@ -61,9 +51,9 @@ module.exports.addLike = (req, res) => {
     })
     .catch((error) => {
       if (error.name === 'CastError') {
-        return sendErrorResponse(res, ERROR_NOT_FOUND, 'Карточка не найдена');
+        throw new ErrorBadRequest('Переданы некорректные данные');
       }
-      return sendErrorResponse(res, SERVER_ERROR, error.message);
+      throw new ServerError('Ошибка сервера');
     });
 };
 
@@ -75,8 +65,8 @@ module.exports.removeLike = (req, res) => {
     })
     .catch((error) => {
       if (error.name === 'CastError') {
-        return sendErrorResponse(res, ERROR_NOT_FOUND, 'Карточка не найдена');
+        throw new ErrorBadRequest('Переданы некорректные данные');
       }
-      return sendErrorResponse(res, SERVER_ERROR, error.message);
+      throw new ServerError('Ошибка сервера');
     });
 };
