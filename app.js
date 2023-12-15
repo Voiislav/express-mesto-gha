@@ -1,5 +1,7 @@
 const express = require('express');
 
+const cookieParser = require('cookie-parser');
+
 const { createUser, login } = require('./controllers/users');
 
 const auth = require('./middlewares/auth');
@@ -35,6 +37,8 @@ app.use('/cards', require('./routes/cards'));
 app.use(errors());
 
 app.use(errorHandler);
+
+app.use(cookieParser());
 
 const { PORT = 3000 } = process.env;
 
