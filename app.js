@@ -24,6 +24,8 @@ app.use(bodyParser.json());
 
 app.use(bodyParser.urlencoded({ extended: true }));
 
+app.use(cookieParser());
+
 app.post('/signin', login);
 
 app.post('/signup', createUser);
@@ -37,8 +39,6 @@ app.use('/cards', require('./routes/cards'));
 app.use(errors());
 
 app.use(errorHandler);
-
-app.use(cookieParser());
 
 const { PORT = 3000 } = process.env;
 
