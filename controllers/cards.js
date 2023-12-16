@@ -14,9 +14,9 @@ module.exports.getAllCards = (req, res, next) => {
 
 module.exports.createCard = (req, res, next) => {
   const {
-    name, link, owner, likes, createdAt,
+    name, link, owner,
   } = req.body;
-  Card.create({ name, link })
+  Card.create({ name, link, owner })
     .then((card) => {
       res.status(201).json({ data: card });
     })

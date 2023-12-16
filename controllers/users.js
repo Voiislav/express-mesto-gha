@@ -18,16 +18,17 @@ module.exports.createUser = (req, res, next) => {
     email,
     password,
   } = req.body;
-  const hash = bcrypt.hash(password, 10);
-  User.create({
-    name,
-    about,
-    avatar,
-    email,
-    password: hash,
-  })
+  bcrypt.hash(password, 10)
+    .then((hash) => User.create({
+      name,
+      about,
+      avatar,
+      email,
+      password: hash,
+    }))
     .then((user) => {
-      res.status(201).json({ data: user });
+      const userWithoutPassword = user.toObject({ select: '-password' });
+      res.status(201).json({ data: userWithoutPassword });
     })
     .catch((error) => {
       if (error.code === 11000) {
@@ -121,18 +122,20 @@ module.exports.updateAvatar = (req, res, next) => {
 
 module.exports.login = (req, res, next) => {
   const { email, password } = req.body;
-  const user = User.findOne({ email }).select('+password')
+  let foundUser;
+  User.findOne({ email }).select('+password')
     .then((user) => {
       if (!user) {
         return next(new ErrorUnauthorized('Неправильные почта или пароль'));
       }
+      foundUser = user;
       return bcrypt.compare(password, user.password);
     })
     .then((matched) => {
       if (!matched) {
         return next(new ErrorUnauthorized('Неправильные почта или пароль'));
       }
-      const token = jwt.sign({ _id: user._id }, 'some-secret-key', { expiresIn: '7d' });
+      const token = jwt.sign({ _id: foundUser._id }, 'some-secret-key', { expiresIn: '7d' });
       res.cookie('jwt', token, { httpOnly: true, maxAge: 7 * 24 * 60 * 60 * 1000 });
       res.json({ message: 'Авторизация прошла успешно', token });
     })
