@@ -123,7 +123,7 @@ module.exports.updateAvatar = (req, res, next) => {
 module.exports.login = (req, res, next) => {
   const { email, password } = req.body;
   let foundUser;
-  User.findOne({ email }).select('-password')
+  User.findOne({ email }).select('+password')
     .then((user) => {
       if (!user) {
         return next(new ErrorUnauthorized('Неправильные почта или пароль'));
