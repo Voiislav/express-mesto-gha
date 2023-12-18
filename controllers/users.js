@@ -27,8 +27,13 @@ module.exports.createUser = (req, res, next) => {
       password: hash,
     }))
     .then((user) => {
-      const userWithoutPassword = user.toObject({ select: '-password' });
-      res.status(201).json({ data: userWithoutPassword });
+      const resUser = {
+        name: user.name,
+        about: user.about,
+        avatar: user.avatar,
+        email: user.email,
+      };
+      res.status(201).json(resUser);
     })
     .catch((error) => {
       if (error.code === 11000) {
@@ -123,7 +128,7 @@ module.exports.updateAvatar = (req, res, next) => {
 module.exports.login = (req, res, next) => {
   const { email, password } = req.body;
   let foundUser;
-  User.findOne({ email }).select('-password')
+  User.findOne({ email }).select('+password')
     .then((user) => {
       if (!user) {
         return next(new ErrorUnauthorized('Неправильные почта или пароль'));
