@@ -27,8 +27,13 @@ module.exports.createUser = (req, res, next) => {
       password: hash,
     }))
     .then((user) => {
-      const userWithoutPassword = user.toObject({ select: '-password' });
-      res.status(201).json({ data: userWithoutPassword });
+      const resUser = {
+        name: user.name,
+        about: user.about,
+        avatar: user.avatar,
+        email: user.email,
+      };
+      res.status(201).json(resUser);
     })
     .catch((error) => {
       if (error.code === 11000) {
